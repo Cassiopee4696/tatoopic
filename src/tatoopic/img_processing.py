@@ -2,6 +2,58 @@
 # -*- coding: utf-8 -*-
 
 import cv2 as cv
+from .bits_convert import BitsConvert
+from .img_processing_exception import ChannelError
+
+class ImgProcessing :
+    COLOR_CHANNEL_A = 3
+    COLOR_CHANNEL_R = 2
+    COLOR_CHANNEL_G = 1
+    COLOR_CHANNEL_B = 0
+    COLOR_CHANNEL_BW = 0
+    BITS_CONVERT = BitsConvert()
+
+    def __init__(self, img_path : str):
+        self.__img = cv.imread(img_path)
+
+    def isImgBW(self) :
+        return len(self.__img[0][0]) == 1
+
+    def getImgChannel(self, channel : int = COLOR_CHANNEL_BW) :
+        try :
+            if self.isImgBW() :
+                return self.__img
+            else :
+                if len(self.__img[0][0]) == 3 and channel == ImgProcessing.COLOR_CHANNEL_A :
+                    raise ChannelError("There's no alpha channel")
+                else :
+                    return self.__img[:,:,channel]
+        except ChannelError as error:
+            print("Error : ", error.args)
+            raise error
+
+    def readInChannel(self, channel : int = COLOR_CHANNEL_BW) :
+        try :
+            img_channel = self.getImgChannel(channel)
+            img_bits = []
+            for y in range(0, len(img_channel)) :
+                for x in range(0, len(img_channel[y])) :
+                    img_bits.append(ImgProcessing.BITS_CONVERT.intToBit(img_channel[y][x]))
+
+            bytes_array = []
+            message = ""
+            for bit in img_bits :
+                bytes_array.append(bit)
+                if len(bytes_array) == 7 :
+                    ascii_chr = chr(ImgProcessing.BITS_CONVERT.bytesToInt(bytes_array))
+                    message += ascii_chr
+                    bytes_array = []
+            return message
+        except Exception as error :
+            print(error)
+            raise error
+
+"""
 
 def imgread_message(img, max_message_size = 4000) : 
     bits = []
@@ -32,13 +84,10 @@ def imgwrite_message(img, message) :
     for caracter in message :
         caracter_bytes = []
         ascii_value = ord(caracter)
-        print("ASCII : ", ascii_value)
-        octet = ""
         while ascii_value > 0 :
             bit = ascii_value % 2
             ascii_value = ascii_value // 2
             caracter_bytes.append(bit)
-            octet += str(bit)
         
         if (len(caracter_bytes) < 8) :
             caracter_bytes += [0 for i in range(8 - len(caracter_bytes))]
@@ -63,3 +112,4 @@ def imgwrite_message(img, message) :
         if (nb_pixel >= len(message_bytes)):
             break
     return img2
+"""
