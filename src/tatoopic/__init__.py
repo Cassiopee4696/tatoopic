@@ -2,4 +2,5 @@
 # -*- coding: utf-8 -*-
 
 from .interface import *
-interface()
+Interface()
+

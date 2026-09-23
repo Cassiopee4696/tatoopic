@@ -11,7 +11,7 @@ class ImgProcessing :
     COLOR_CHANNEL_G = 1
     COLOR_CHANNEL_B = 0
     COLOR_CHANNEL_BW = 0
-    BITS_CONVERT = BitsConvert()
+    SUPPORTED_FILES = (".png", ".jpg", ".bmp")
 
     def __init__(self, img_path : str):
         self.__img = cv.imread(img_path)
@@ -29,7 +29,6 @@ class ImgProcessing :
                 else :
                     return self.__img[:,:,channel]
         except ChannelError as error:
-            print("Error : ", error.args)
             raise error
 
     def readInChannel(self, channel : int = COLOR_CHANNEL_BW) :
@@ -38,20 +37,20 @@ class ImgProcessing :
             img_bits = []
             for y in range(0, len(img_channel)) :
                 for x in range(0, len(img_channel[y])) :
-                    img_bits.append(ImgProcessing.BITS_CONVERT.intToBit(img_channel[y][x]))
+                    pxl_bit = BitsConvert.intToBit(int(img_channel[y][x]))
+                    img_bits.append(pxl_bit)
 
             bytes_array = []
             message = ""
             for bit in img_bits :
                 bytes_array.append(bit)
                 if len(bytes_array) == 7 :
-                    ascii_chr = chr(ImgProcessing.BITS_CONVERT.bytesToInt(bytes_array))
+                    ascii_chr = chr(BitsConvert.bytesToInt(bytes_array))
                     message += ascii_chr
                     bytes_array = []
             return message
-        except Exception as error :
-            print(error)
-            raise error
+        except Exception :
+            raise
 
 """
 
