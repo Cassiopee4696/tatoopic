@@ -30,11 +30,11 @@ class BitsConvert :
     Returns bytes (array of 8 integers between 0 & 1) from integer
     (or nothing if the number is higher or equal to 256)
     """
-    def intToBytes(nb : int, self):
+    def intToBytes(nb : int):
        
         bytes_array = []
         while nb > 0 :
-            bytes_array.append(self.intToBit(nb))
+            bytes_array.append(BitsConvert.intToBit(nb))
             nb = nb // 2
         return bytes_array
          

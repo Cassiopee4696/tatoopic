@@ -2,19 +2,21 @@
 # -*- coding: utf-8 -*-
 
 import cv2 as cv
+import os
 from .bits_convert import BitsConvert
-from .img_processing_exception import ChannelError
+
 
 class ImgProcessing :
     COLOR_CHANNEL_A = 3
     COLOR_CHANNEL_R = 2
     COLOR_CHANNEL_G = 1
     COLOR_CHANNEL_B = 0
-    COLOR_CHANNEL_BW = 0
+    COLOR_CHANNEL_BW = -1
     SUPPORTED_FILES = (".png", ".jpg", ".bmp")
 
     def __init__(self, img_path : str):
         self.__img = cv.imread(img_path)
+        self.__path = img_path
 
     def isImgBW(self) :
         return len(self.__img[0][0]) == 1
@@ -25,11 +27,24 @@ class ImgProcessing :
                 return self.__img
             else :
                 if len(self.__img[0][0]) == 3 and channel == ImgProcessing.COLOR_CHANNEL_A :
-                    raise ChannelError("There's no alpha channel")
+                    raise IndexError("No alpha channel")
                 else :
                     return self.__img[:,:,channel]
-        except ChannelError as error:
-            raise error
+        except Exception :
+            raise
+
+    def saveImg(self, img_channel, channel : int = COLOR_CHANNEL_BW) :
+        path, extension = os.path.splitext(self.__path)
+        img_tatooed_path = path + "_tatooed"
+        img_tatooed_path += extension
+
+        if channel == self.COLOR_CHANNEL_BW :
+            cv.imwrite(img_tatooed_path, img_channel)
+        else :
+            img_tatooed = self.__img
+            img_tatooed[:,:,channel] = img_channel
+            cv.imwrite(img_tatooed_path, img_tatooed)
+        return img_tatooed_path
 
     def readInChannel(self, channel : int = COLOR_CHANNEL_BW) :
         try :
@@ -49,6 +64,37 @@ class ImgProcessing :
                     message += ascii_chr
                     bytes_array = []
             return message
+        except Exception :
+            raise
+
+    def writeInChannel(self, message : str, channel : int = COLOR_CHANNEL_BW) :
+        try: 
+            img_channel = self.getImgChannel(channel)
+            message_bits = []
+
+            for chr in message :
+                chr_bytes = BitsConvert.intToBytes(ord(chr))
+                message_bits += chr_bytes
+
+           
+            nb_message_bits = len(message_bits)
+            if nb_message_bits > len(img_channel) * len(img_channel) :
+                raise IndexError("Not enough pixels")
+
+            nb_pxl = 0
+            for y in range(len(img_channel)) :
+                for x in range(len(img_channel[y])) :
+                    if nb_pxl == nb_message_bits :
+                        break
+                    pixel = img_channel[y][x]
+                    bit = message_bits[nb_pxl]
+                    if (pixel%2 != bit) :
+                        if (pixel == 255) :
+                            img_channel[y][x] = img_channel[y][x] - 1
+                        img_channel[y][x] = img_channel[y][x] + 1
+                    nb_pxl +=1   
+
+            return self.saveImg(img_channel, channel)
         except Exception :
             raise
 
