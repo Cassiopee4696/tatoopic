@@ -36,6 +36,8 @@ class BitsConvert :
         while nb > 0 :
             bytes_array.append(BitsConvert.intToBit(nb))
             nb = nb // 2
+        if (len(bytes_array) < 8) :
+            bytes_array += [0 for i in range(8 - len(bytes_array))]
         return bytes_array
          
 

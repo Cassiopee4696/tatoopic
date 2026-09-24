@@ -13,6 +13,7 @@ class ImgProcessing :
     COLOR_CHANNEL_B = 0
     COLOR_CHANNEL_BW = -1
     SUPPORTED_FILES = (".png", ".jpg", ".bmp")
+    MAX_READING = 4000
 
     def __init__(self, img_path : str):
         self.__img = cv.imread(img_path)
@@ -29,37 +30,43 @@ class ImgProcessing :
                 if len(self.__img[0][0]) == 3 and channel == ImgProcessing.COLOR_CHANNEL_A :
                     raise IndexError("No alpha channel")
                 else :
-                    return self.__img[:,:,channel]
+                    return self.__img[:,:,channel].copy()
         except Exception :
             raise
 
     def saveImg(self, img_channel, channel : int = COLOR_CHANNEL_BW) :
         path, extension = os.path.splitext(self.__path)
-        img_tatooed_path = path + "_tatooed"
-        img_tatooed_path += extension
+        img_tatooed_path = path + "_tatooed.png"
 
-        if channel == self.COLOR_CHANNEL_BW :
-            cv.imwrite(img_tatooed_path, img_channel)
-        else :
-            img_tatooed = self.__img
-            img_tatooed[:,:,channel] = img_channel
-            cv.imwrite(img_tatooed_path, img_tatooed)
+        if channel == self.COLOR_CHANNEL_BW:
+            img_tatooed = img_channel
+        else:
+            img_tatooed = self.__img.copy()
+            img_tatooed[:, :, channel] = img_channel
+
+        cv.imwrite(img_tatooed_path, img_tatooed)
         return img_tatooed_path
 
     def readInChannel(self, channel : int = COLOR_CHANNEL_BW) :
         try :
             img_channel = self.getImgChannel(channel)
             img_bits = []
+            nb_pxl = 0
             for y in range(0, len(img_channel)) :
+                if (nb_pxl == self.MAX_READING) :
+                    break
                 for x in range(0, len(img_channel[y])) :
+                    if (nb_pxl == self.MAX_READING) :
+                        break
                     pxl_bit = BitsConvert.intToBit(int(img_channel[y][x]))
                     img_bits.append(pxl_bit)
+                    nb_pxl +=1
 
             bytes_array = []
             message = ""
             for bit in img_bits :
                 bytes_array.append(bit)
-                if len(bytes_array) == 7 :
+                if len(bytes_array) == 8 :
                     ascii_chr = chr(BitsConvert.bytesToInt(bytes_array))
                     message += ascii_chr
                     bytes_array = []
@@ -76,7 +83,6 @@ class ImgProcessing :
                 chr_bytes = BitsConvert.intToBytes(ord(chr))
                 message_bits += chr_bytes
 
-           
             nb_message_bits = len(message_bits)
             if nb_message_bits > len(img_channel) * len(img_channel) :
                 raise IndexError("Not enough pixels")
@@ -88,12 +94,14 @@ class ImgProcessing :
                         break
                     pixel = img_channel[y][x]
                     bit = message_bits[nb_pxl]
-                    if (pixel%2 != bit) :
+                    if (BitsConvert.intToBit(pixel) != bit) :
                         if (pixel == 255) :
-                            img_channel[y][x] = img_channel[y][x] - 1
-                        img_channel[y][x] = img_channel[y][x] + 1
+                            img_channel[y][x] = pixel - 1
+                        else :
+                            img_channel[y][x] = pixel + 1
                     nb_pxl +=1   
-
+                if nb_pxl == nb_message_bits :
+                    break
             return self.saveImg(img_channel, channel)
         except Exception :
             raise
