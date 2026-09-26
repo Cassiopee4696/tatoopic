@@ -9,5 +9,7 @@ __pycache__/
 # pip
 pip-log.txt
 
-#debug
+#debug & tests
 debug
+.png~
+.kra

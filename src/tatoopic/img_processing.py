@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import cv2 as cv
+import numpy as np
 import os
 from .bits_convert import BitsConvert
 
@@ -15,12 +16,18 @@ class ImgProcessing :
     SUPPORTED_FILES = (".png", ".jpg", ".bmp")
     MAX_READING = 4000
 
-    def __init__(self, img_path : str):
-        self.__img = cv.imread(img_path)
+    def __init__(self, img_path : str, isBW : bool = False):
+        if (isBW) :
+            self.__img = cv.imread(img_path, 0)
+        else :
+            self.__img = cv.imread(img_path)
         self.__path = img_path
 
+    def getImg(self) :
+        return self.__img
+
     def isImgBW(self) :
-        return len(self.__img[0][0]) == 1
+        return type(self.__img[0][0]) == np.uint8
 
     def getImgChannel(self, channel : int = COLOR_CHANNEL_BW) :
         try :
