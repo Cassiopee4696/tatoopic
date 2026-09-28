@@ -14,17 +14,19 @@ class ImgProcessing :
     COLOR_CHANNEL_B = 0
     COLOR_CHANNEL_BW = -1
     SUPPORTED_FILES = (".png", ".jpg", ".bmp")
-    MAX_READING = 4000
 
     def __init__(self, img_path : str, isBW : bool = False):
         if (isBW) :
-            self.__img = cv.imread(img_path, 0)
+            self.__img = cv.imread(img_path, cv.IMREAD_GRAYSCALE)
         else :
-            self.__img = cv.imread(img_path)
+            self.__img = cv.imread(img_path, cv.IMREAD_UNCHANGED)
         self.__path = img_path
 
     def getImg(self) :
         return self.__img
+    
+    def getPath(self) :
+        return self.__path
 
     def isImgBW(self) :
         return type(self.__img[0][0]) == np.uint8
@@ -60,12 +62,8 @@ class ImgProcessing :
             img_bits = []
             nb_pxl = 0
             for y in range(0, len(img_channel)) :
-                if (nb_pxl == self.MAX_READING) :
-                    break
                 for x in range(0, len(img_channel[y])) :
-                    if (nb_pxl == self.MAX_READING) :
-                        break
-                    pxl_bit = BitsConvert.intToBit(int(img_channel[y][x]))
+                    pxl_bit = BitsConvert.intToBit(img_channel[y][x])
                     img_bits.append(pxl_bit)
                     nb_pxl +=1
 
@@ -113,63 +111,3 @@ class ImgProcessing :
         except Exception :
             raise
 
-"""
-
-def imgread_message(img, max_message_size = 4000) : 
-    bits = []
-    for y in range(0, len(img)) :
-        for x in range(0, len(img[y])) :
-            bits.append(img[y][x] % 2)
-
-    bytes_powers = [1, 2, 4, 8, 16, 32, 64, 128]
-    power = 0
-    message = ""
-    base10_octet = 0
-    for bit in bits : 
-        base10_octet += bit * bytes_powers[power]
-        power = power + 1
-        max_message_size= max_message_size-1
-        if (power > 7) :
-            message += chr(base10_octet)
-            power = 0
-            base10_octet = 0
-        if (max_message_size==0) :
-            break
-    return message 
-
-def imgwrite_message(img, message) :
-    img2 = img
-    message_bytes = []
-    #Conversion de chaque caractère en octet :
-    for caracter in message :
-        caracter_bytes = []
-        ascii_value = ord(caracter)
-        while ascii_value > 0 :
-            bit = ascii_value % 2
-            ascii_value = ascii_value // 2
-            caracter_bytes.append(bit)
-        
-        if (len(caracter_bytes) < 8) :
-            caracter_bytes += [0 for i in range(8 - len(caracter_bytes))]
-
-        message_bytes += caracter_bytes
-
-    nb_pixel = 0
-    #Injection des bits dans les pixels de l'image :
-    for y in range(0, len(img2)) :
-        for x in range(0, len(img2[y])) :
-            if (nb_pixel >= len(message_bytes)):
-                break
-            else :
-                pixel = img2[y][x]
-                bit = message_bytes[nb_pixel]
-                if (pixel%2 != bit) :
-                    if (pixel == 255) :
-                        img2[y][x] = img2[y][x] - 1
-                    img2[y][x] = img2[y][x] + 1
-                nb_pixel +=1
-
-        if (nb_pixel >= len(message_bytes)):
-            break
-    return img2
-"""
