@@ -10,6 +10,11 @@ __pycache__/
 pip-log.txt
 
 #debug & tests
-debug
+debug/
 .png~
 .kra
+.pytest_cache/
+
+#build
+build/
+dist/
